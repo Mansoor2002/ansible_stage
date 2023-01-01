@@ -1,0 +1,31 @@
+
+
+
+    - name: Ensure replicaset rs0 exists
+      community.mongodb.mongodb_replicaset:
+        login_host: localhost
+        login_user: admin
+        login_password: admin
+        replica_set: rs0
+        members:
+        - 192.168.80.100:27017
+        - 192.168.80.101:27017
+      when: groups.mongod.index(inventory_hostname) == 0
+
+
+
+    - name: Ensure replicaset rs0 exists
+      mongodb_replicaset:
+        login_host: localhost
+        login_user: admin
+        login_password: admin
+        replica_set: rs0
+        members:
+        - mongodb1:27017
+        - mongodb2:27017
+        - mongodb3:27017
+      when: groups.mongod.index(inventory_hostname) == 0
+
+
+
+

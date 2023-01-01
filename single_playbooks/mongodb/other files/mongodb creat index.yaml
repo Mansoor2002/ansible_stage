@@ -1,0 +1,25 @@
+
+
+# create index
+
+- name: Create multiple indexes
+  community.mongodb.mongodb_index:
+    login_user: admin
+    login_password: secret
+    indexes:
+      - database: mydb
+        collection: test
+        keys:
+          - username: 1
+            last_login: -1
+        options:
+          name: myindex
+        state: present
+      - database: mydb
+        collection: test
+        keys:
+          - email: 1
+            last_login: -1
+        options:
+          name: myindex2
+        state: present

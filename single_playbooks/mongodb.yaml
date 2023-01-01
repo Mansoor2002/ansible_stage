@@ -1,0 +1,53 @@
+---
+- hosts: ansible-test
+  remote_user: root
+  become: yes
+# Module apt_key: add repository keys¶
+tasks:
+  - name: Import the public key used by the package management system
+    apt_key: keyserver=hkp://keyserver.ubuntu.com:80 id=7F0CEB10 state=present
+  # Module apt_repository: add repositories¶
+  - name: Add MongoDB repository
+    apt_repository: repo='deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' state=present
+
+  # Module apt: install packages¶
+  - name: install mongodb
+    apt: pkg=mongodb-org state=latest update_cache=yes
+    notify:
+    - start mongodb
+
+# Module service: manage services¶
+handlers:
+  - name: start mongodb
+    service: name=mongod state=started
+
+
+
+
+  - name: Ensure replicaset rs0 exists
+    mongodb_replicaset:
+      login_host: localhost
+      login_user: admin
+      login_password: admin
+      replica_set: rs0
+      members:
+      - mongodb1:27017
+      - mongodb2:27017
+      - mongodb3:27017
+    when: groups.mongod.index(inventory_hostname) == 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

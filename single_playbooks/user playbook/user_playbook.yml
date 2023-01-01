@@ -1,0 +1,19 @@
+---
+- hosts: all
+  become: true
+  remote_user: ansible
+  tasks:
+    - name: install newrelic agent
+      ansible.builtin.shell: "curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=NRAK-VGBYOTDO0O1STJ0VMY0VQCQB21D NEW_RELIC_ACCOUNT_ID=1454034 /usr/local/bin/newrelic install"
+
+
+
+
+
+---
+- hosts: webservers
+  roles:
+    - role: newrelic.newrelic-infra
+      vars:
+        nrinfragent_config:
+          license_key: YOUR_LICENSE_KEY

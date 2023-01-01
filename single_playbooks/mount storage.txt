@@ -1,0 +1,12 @@
+- name: Ansible Mount Module
+    hosts: all
+    gather_facts: false
+    become: true
+    tasks:
+    - name: Mount and bind volume
+        mount:
+            path: /mnt/dev10
+            src: /dev/mountMe
+            opts: bind
+            fstype: none
+            state: mounted

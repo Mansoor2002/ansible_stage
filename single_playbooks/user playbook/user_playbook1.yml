@@ -1,0 +1,36 @@
+---
+- hosts: users
+  become: true
+  remote_user: ansible
+  vars_files:
+    - list.yml
+  tasks:
+    - name: Ensure group "somegroup" exists
+      ansible.builtin.group:
+        name: developer
+        state: present
+    - name: add users
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        groups: "{{ item.groups }}"
+        shell: /bin/bash
+        state: "{{ item.state }}"
+        system: true
+      with_items: "{{ user_details }}"
+      become: true
+    - name: Task name
+      stat:
+        path: /home/{{ item.name }}"
+      register: "{{ item.name }}"
+      with_items: "{{ user_details }}"
+    - name: Set authorized key
+      ansible.posix.authorized_key:
+        user: "{{ item.name }}"
+        state: "{{ item.state }}"
+        key: "{{ item.key }}"
+      with_items: "{{ user_details }}"
+      ignore_errors: true
+      when: register_name."{{ item.name }}"
+
+
+

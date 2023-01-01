@@ -1,0 +1,131 @@
+---
+- hosts: mongoglobal
+  become: true
+  remote_user: ansible
+# cat /etc/sysctl.conf
+  vars:
+    replica_set_name: easyTaxiRSV2
+# sudo chown -R mongod:mongod /data
+  tasks:
+    - name: Modify soft nofile limits for wildcard domain
+      community.general.pam_limits:
+        domain: '*'
+        limit_type: soft
+        limit_item: nofile
+        value: 64000
+    - name: Modify hard nofile limits for wildcard domain
+      community.general.pam_limits:
+        domain: '*'
+        limit_type: hard
+        limit_item: nofile
+        value: 64000
+    - name: Modify soft nproc limits for wildcard domain
+      community.general.pam_limits:
+        domain: '*'
+        limit_type: soft
+        limit_item: nproc
+        value: 32000
+    - name: Modify hard nproc limits for wildcard domain
+      community.general.pam_limits:
+        domain: '*'
+        limit_type: hard
+        limit_item: nproc
+        value: 30000
+    - ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        sysctl_set: yes
+    - ansible.posix.sysctl:
+        name: net.ipv4.tcp_tw_reuse
+        value: '0'
+        sysctl_set: yes
+    - ansible.posix.sysctl:
+        name: net.ipv4.tcp_keepalive_time
+        value: '300'
+        sysctl_set: yes
+    - name: Create download folder
+      file:
+        path: "/download"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+    - name: Copy mongodb-org-server
+      copy: 
+        src: ./files/mongodb-org-server-3.2.6-1.amzn1.x86_64.rpm
+        dest: /download/mongodb-org-server-3.2.6-1.amzn1.x86_64.rpm
+        owner: root 
+        group: root 
+        mode: 0755
+#      when: ansible_distribution == 'Amazon'
+    - name: Copy mongodb-org-mongos
+      copy: 
+        src: ./files/mongodb-org-mongos-3.2.6-1.amzn1.x86_64.rpm
+        dest: /download/mongodb-org-mongos-3.2.6-1.amzn1.x86_64.rpm
+        owner: root 
+        group: root 
+        mode: 0755
+    - name: Copy mongodb-org-tools
+      copy: 
+        src: ./files/mongodb-org-tools-3.2.6-1.amzn1.x86_64.rpm
+        dest: /download/mongodb-org-tools-3.2.6-1.amzn1.x86_64.rpm
+        owner: root 
+        group: root 
+        mode: 0755
+    - name: Copy mongodb-org-shell
+      copy: 
+        src: ./files/mongodb-org-shell-3.2.6-1.amzn1.x86_64.rpm
+        dest: /download/mongodb-org-shell-3.2.6-1.amzn1.x86_64.rpm
+        owner: root 
+        group: root 
+        mode: 0755
+    - name: Install mongodb-org-server
+      ansible.builtin.yum:
+        name: /download/mongodb-org-server-3.2.6-1.amzn1.x86_64.rpm
+        state: present
+    - name: Install mongodb-org-mongos
+      ansible.builtin.yum:
+        name: /download/mongodb-org-mongos-3.2.6-1.amzn1.x86_64.rpm
+        state: present
+    - name: Install mongodb-org-tools
+      ansible.builtin.yum:
+        name: /download/mongodb-org-tools-3.2.6-1.amzn1.x86_64.rpm
+        state: present
+    - name: Install mongodb-org-shell
+      ansible.builtin.yum:
+        name: /download/mongodb-org-shell-3.2.6-1.amzn1.x86_64.rpm
+        state: present
+
+
+    - name: Set the switch data_directory_changed
+      set_fact:
+        data_directory_changed: true
+
+    - name: change /data ownership to mongodb
+      ansible.builtin.file:
+        path: /data
+        owner: mongod
+        group: mongod
+        mode: '1750'
+      notify:
+        - restart mongodb
+      when: data_directory_changed
+
+
+    - name: copy config file
+      template: 
+        src: mongod.conf
+        dest: /etc/mongod.conf
+      notify:
+        - restart mongodb
+
+        
+  handlers:
+    - name: restart mongodb
+      ansible.builtin.systemd:
+        name: mongod
+        state: restarted
+        enabled: yes
+  
+
+

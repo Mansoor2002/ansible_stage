@@ -1,0 +1,10 @@
+.Add the following line to /etc/sysctl.conf:
+vm.max_map_count=map_count
+where map_count should be around 1 per 128 KB of system memory. For example:
+vm.max_map_count=2097152
+on a 256 GB system.
+2.Reload the config as root:
+sysctl -p
+3.Check the new value:
+cat /proc/sys/vm/max_map_count
+4.Restart Vector.

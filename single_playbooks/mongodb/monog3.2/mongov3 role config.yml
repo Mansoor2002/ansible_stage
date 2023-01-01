@@ -1,0 +1,132 @@
+
+
+
+---
+classes:
+  - easytaxi::mongo::setup
+  - easytaxi::mongo::10_gen_best_practices
+  - easytaxi::mongo::mongorotate_legacy
+  - easytaxi::mongo
+
+mongodb::globals::version: 3.2.6-1.amzn1
+mongodb::globals::manage_package_repo: true
+mongodb::globals::repo_location: https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/3.2/x86_64
+easytaxi::mongo::setup::mount_on_tmpfs: false
+mongodb::server::slowms: 10 # default is 100
+    # Operation Profiling
+    # by defualt it is false
+    operationProfiling.slowOpThresholdMs: 10
+    https://www.mongodb.com/docs/v3.4/reference/configuration-options/#operationprofiling-options
+
+
+
+
+mongodb::server::quiet: true
+  # in conf file quiet value is false
+    https://www.mongodb.com/docs/manual/reference/configuration-options/#mongodb-setting-systemLog.quiet
+          systemLog.quiet
+        Type: boolean
+        Default: false
+        Run mongos or mongod in a quiet mode that attempts to limit the amount of output.
+        systemLog.quiet
+        is not recommended for production systems as it may make tracking problems during particular connections much more difficult.
+
+
+
+
+
+mongodb::server::smallfiles: true
+    # it is used with mmapv1 storage engine
+    https://www.mongodb.com/docs/v3.4/reference/configuration-options/#storage.mmapv1.smallFiles
+
+
+
+mongodb::server::notablescan: true
+    # not present in mongo configuration
+
+mongodb::server::storage_engine: wiredTiger
+easytaxi::mongo::enable_newrelic: true
+easytaxi::newrelic::mongo::databases:
+    - admin
+    - easytaxi_promotion_usage
+    - easytaxi_push_campaign
+    - easytaxi_v2_live
+    - integracao
+    - mongodb_database_push_campaigns
+    - mongodb_database_pushes
+    - silvio
+    - local
+limits:
+  "*":
+    nofile:
+      soft: 64000
+      hard: 64000
+    nproc:
+      soft: 32000
+      hard: 30000
+sysctl::base::values:
+  net.ipv4.tcp_keepalive_time:
+    value: 300
+- name: net.ipv4.tcp_keepalive_time
+  sysctl:
+    name: net.ipv4.tcp_keepalive_time
+    value: '300'
+    state: present
+# default value is 300
+
+
+------------------------
+
+  net.ipv4.tcp_tw_reuse:
+    value: 0
+- name: net.ipv4.tcp_tw_reuse
+  sysctl:
+    name: net.ipv4.tcp_tw_reuse
+    value: '0'
+    state: present
+
+-----------------------------
+
+  net.ipv4.tcp_tw_recycle:
+    value: 0
+- name: net.ipv4.tcp_tw_recycle
+  sysctl:
+    name: net.ipv4.tcp_tw_recycle
+    value: '0'
+    state: present
+NOTE: net.ipv4.tcp_tw_recycle has been removed from Linux in 4.12 (4396e46187ca tcp: remove tcp_tw_recycle).
+SOURCE: https://vincent.bernat.im/en/blog/2014-tcp-time-wait-state-linux
+------------------------------
+
+  net.ipv4.ip_forward:
+    value: 0
+- name: net.ipv4.ip_forward
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '0'
+    state: present
+
+
+
+    
+mongodb::server::replset: easyTaxiRSV2
+easytaxi::mongo::replicaset_nodes: ['mongoglobal40.internal.sa.easytaxi.com:27017','mongoglobal50.internal.sa.easytaxi.com:27017','mongoglobal70.internal.sa.easytaxi.com:27017','mongoglobal120.internal.sa.easytaxi.com:27017','mongoglobal110.internal.sa.easytaxi.com:27017']
+
+
+
+
+
+# systemLog.quiet: false
+not recomended on production
+https://www.mongodb.com/docs/v3.4/reference/configuration-options/#systemLog.quiet
+
+
+
+###########################################################
+- name: vm.max_map_count
+  sysctl:
+    name: vm.max_map_count
+    value: "{{ vm_max_map_count }}"
+    state: present
+  notify:
+    - restart mongodb

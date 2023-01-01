@@ -1,0 +1,8 @@
+---
+- name: Ensure Mongo dbs are present.
+  shell: /usr/bin/mongo -u siteRootAdmin -p "{{ SRA_password }}" --eval "db.getSiblingDB('{{ item.dbname }}').createCollection('{{  item.collection }}')"
+  with_items: "{{ mongo_databases | default([]) }}"
+  no_log: false
+  become: yes
+
+  

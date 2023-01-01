@@ -1,0 +1,40 @@
+---
+- hosts: all
+  become: true
+  remote_user: ansible
+  vars:
+    replica_set_name: rs1
+  tasks:
+    - name: "Import MongoDB public key"
+      apt_key:
+         url: "https://www.mongodb.org/static/pgp/server-5.0.asc"
+         state: present
+    - name: "Add MongoDB repository"
+      apt_repository:
+         filename: '/etc/apt/sources.list.d/mongodb-org-5.0.list'
+         repo: "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse"
+         state: present
+         update_cache: yes
+    - name: "Install MongoDB"
+      apt: 
+         name: mongodb-org
+         state: present
+         update_cache: yes  
+      notify:
+        - start mongodb  
+    - name: copy config file
+      template: 
+        src: mongod.conf
+        dest: /etc/mongod.conf
+      notify:
+        - restart mongodb
+  handlers:
+    - name: start mongodb
+      ansible.builtin.systemd:
+        name: mongod
+        state: started
+        enabled: yes
+    - name: restart mongodb
+      ansible.builtin.systemd:
+        name: mongod
+        state: restarted

@@ -1,0 +1,8 @@
+ansible-playbook playbook_name.yml
+
+
+ansible-playbook -i inventory.txt -c ssh enable-root-access.yaml
+
+
+
+

@@ -1,0 +1,81 @@
+---
+- hosts: mongodb_easytaxi_rating
+  become: true
+  remote_user: ansible
+  vars:
+    replica_set_name: mongodb_easytaxi_rating
+  tasks:
+    - name: Create a ext4 filesystem on /dev/sdb1 and check disk blocks
+      community.general.filesystem:
+        fstype: xfs
+        dev: /dev/nvme1n1
+        #opts: -cc
+    - name: mounting the volume
+      mount: 
+        name: /data
+        fstype: xfs
+        state: mounted 
+        src: /dev/nvme1n1
+    - name: "install ntp"
+      apt: 
+         name: ntp
+         state: present
+         update_cache: yes  
+      notify:
+        - start ntp  
+    - name: "Import MongoDB public key"
+      apt_key:
+         url: "https://www.mongodb.org/static/pgp/server-6.0.asc"
+         state: present
+    - name: "Add MongoDB repository"
+      apt_repository:
+         filename: '/etc/apt/sources.list.d/mongodb-org-5.0.list'
+         repo: "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse"
+         state: present
+         update_cache: yes
+    - name: "Install MongoDB"
+      apt: 
+         name: mongodb-org
+         state: present
+         update_cache: yes  
+      #notify:
+      #  - start mongodb 
+    - name: Give permissions mongodb
+      ansible.builtin.file:
+        path: /data
+        owner: mongodb
+        group: mongodb
+        mode: '1750'
+      notify:
+        - restart mongodb
+    - name: copy config file
+      template: 
+        src: mongod.conf
+        dest: /etc/mongod.conf
+      notify:
+        - restart mongodb
+    - name: vm.max_map_count 
+      sysctl:
+        name: vm.max_map_count 
+        value: '262144'
+        state: present
+      notify:
+        - restart mongodb      
+  handlers:
+    - name: start mongodb
+      ansible.builtin.systemd:
+        name: mongod
+        state: started
+        enabled: yes
+    - name: restart mongodb
+      ansible.builtin.systemd:
+        name: mongod
+        state: restarted
+        enabled: yes
+    - name: start ntp
+      ansible.builtin.systemd:
+        name: ntp
+        state: restarted
+
+
+

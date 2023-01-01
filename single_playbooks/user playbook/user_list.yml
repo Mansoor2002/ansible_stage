@@ -1,0 +1,13 @@
+user_details:
+      - {state: 'absent', 
+            name: 'testuser1', 
+            groups: ['developer'], 
+            key: 'ssh-ed25519 AAAAA.....0 zahr1@localhost'}
+      - {state: 'present', 
+            name: 'testuser2', 
+            groups: ['developer'], 
+            key: 'ssh-ed25519 AAAAA.....0 zahr1@localhost'}
+      - {state: 'present', 
+            name: 'testuser3', 
+            groups: ['developer'], 
+            key: 'ssh-ed25519 AAAAA.....0 zahr1@localhost'}

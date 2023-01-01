@@ -1,0 +1,9 @@
+user_details:
+      - { name: 'user10', state: present, remove: yes, groups: ['developer'], become: 'true',
+            key: 'ssh-ed25519 AAAAA.....0 zahr1@localhost'}
+      - { name: 'user20', state: 'absent', remove: yes, groups: ['developer'], become: 'true',
+            key: 'ssh-ed25519 AAAAA.....0 zahr1@localhost'}
+      - { name: 'user30', state: present, remove: yes, groups: ['developer'], become: 'true',
+            key: 'ssh-ed25519 AAAAA.....0 zahr1@localhost'}
+      - { name: 'user40', state: absent, remove: yes, groups: ['developer'], become: 'true',
+            key: 'ssh-ed25519 AAAAA.....0 zahr1@localhost'}

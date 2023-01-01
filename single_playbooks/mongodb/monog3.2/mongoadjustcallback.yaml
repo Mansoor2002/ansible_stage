@@ -1,0 +1,91 @@
+---
+classes:
+  - easytaxi::mongo::setup
+                              $dbpath = '/data/',
+                              $logpath = '/log',
+
+
+
+
+
+  - easytaxi::mongo::10_gen_best_practices
+  - easytaxi::mongo::mongorotate_legacy
+
+              $mongorotate_legacy_dirs = [
+              '/opt/rocket',
+              '/opt/rocket/bin/',
+                                      $logpath = '/log',
+
+
+
+                                    logdir=<%= @logpath %>
+
+                                    # Rotating Log
+                                    killall -SIGUSR1 mongod
+
+                                    # Compressing log
+                                    gzip -9 $logdir/<%= @logfile %>.????-??-??T??-??-??
+
+                                    # Removing old files
+                                    find $logdir -type f -name "*gz" -mtime +3 -delete
+
+
+
+
+  - easytaxi::mongo
+
+mongodb::globals::version: 3.4.9-1.amzn1
+mongodb::globals::manage_package_repo: true
+easytaxi::run_at_startup::commands: |-
+ while [ ! -f /var/run/mongodb/mongod.pid ]; do echo "Waiting for mongod to start"; sleep 5; done
+ mongo localhost/driver_logs --eval 'db.driver_logs.createIndex({"driver_id": 1, "created_at" : 1, "modified_by" : 1}, {name: "driver_logs_list_index"})'
+mongodb::globals::repo_location: https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/3.4/x86_64/
+easytaxi::mongo::setup::mount_on_tmpfs: false # storage mount
+mongodb::server::smallfiles: false      # depricated
+mongodb::server::nojournal: true  # nojournal:true is not recommended of production
+mongodb::server::noprealloc: false
+mongodb::server::slowms: 500
+mongodb::server::quiet: true
+  # in conf file quiet value is false
+    https://www.mongodb.com/docs/manual/reference/configuration-options/#mongodb-setting-systemLog.quiet
+          systemLog.quiet
+        Type: boolean
+        Default: false
+        Run mongos or mongod in a quiet mode that attempts to limit the amount of output.
+        systemLog.quiet
+        is not recommended for production systems as it may make tracking problems during particular connections much more difficult.
+
+
+
+
+
+
+
+mongodb::server::notablescan: false # not in mongo.conf file
+easytaxi::mongo::enable_newrelic: true
+easytaxi::newrelic::mongo::databases:
+    - admin
+    - adjustcallback
+    - local
+    - driver_logs
+limits:
+  "*":
+    nofile:
+      soft: 64000
+      hard: 64000
+    nproc:
+      soft: 32000
+      hard: 30000
+sysctl::base::values:
+  net.ipv4.tcp_keepalive_time:
+    value: 300
+  net.ipv4.tcp_tw_reuse:
+    value: 0
+  net.ipv4.tcp_tw_recycle:
+    value: 0
+  net.ipv4.ip_forward:
+    value: 0
+mongodb::server::replset: rsAdjustCallBack
+easytaxi::mongo::replicaset_nodes: ['mongoadjustcallback10.internal.sa.easytaxi.com:27017','mongoadjustcallback20.internal.sa.easytaxi.com:27017','mongoadjustcallback30.internal.sa.easytaxi.com:27017']
+databases:
+  - adjustcallback

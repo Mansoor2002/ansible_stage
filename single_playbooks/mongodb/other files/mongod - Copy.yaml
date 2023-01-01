@@ -1,0 +1,145 @@
+---
+- hosts: servers
+  become: true
+  remote_user: ansible
+#  vars_files:
+#     - default.yml
+  tasks:
+    - name: "Install aptitude"
+      apt:
+        name: aptitude
+        state: latest
+        update_cache: true
+    - name: "Import MongoDB public key"
+      apt_key:
+         url: "https://www.mongodb.org/static/pgp/server-5.0.asc"
+         state: present
+    - name: "Add MongoDB repository"
+      apt_repository:
+         filename: '/etc/apt/sources.list.d/mongodb-org-5.0.list'
+         repo: "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse"
+         state: present
+         update_cache: yes
+    - name: "Install MongoDB"
+      apt: 
+         name: mongodb-org
+         state: present
+         update_cache: yes  
+      notify:
+        - start mongod   
+    - name: copy config file
+      copy:
+        src: mongod.conf
+        dest: /etc/mongod.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - restart mongodb
+
+    - name: Ensure replicaset rs0 exists
+      mongodb_replicaset:
+        login_host: localhost
+        login_user: admin
+        login_password: admin
+        replica_set: rs0
+        members:
+        - 3.85.172.42:27017
+        - 54.209.50.253:27017
+      when: groups.mongod.index(inventory_hostname) == 0
+      
+  handlers:
+    - name: start mongod
+      service: name=mongod state=started
+    - name: restart mongodb
+      service: name=mongod state=restarted
+
+
+
+
+
+
+
+
+
+
+
+    - name: Ensure replicaset rs0 exists
+      community.mongodb.mongodb_replicaset:
+        login_host: localhost
+        login_user: admin
+        login_password: admin
+        replica_set: rs0
+        members:
+        - 3.85.172.42:27017
+        - 54.209.50.253:27017
+      when: groups.mongod.index(inventory_hostname) == 0
+
+
+
+
+
+
+
+
+
+    - name: create /etc/security/limits.d/mongodb.conf
+      copy:
+        src: security-mongodb.conf
+        dest: /etc/security/limits.d/mongodb.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - restart mongodb
+
+
+
+
+
+
+
+
+
+    - name: Ensure replicaset rs0 exists
+      mongodb_replicaset:
+        login_host: localhost
+        login_user: admin
+        login_password: admin
+        replica_set: rs0
+        members:
+        - mongodb1:27017
+        - mongodb2:27017
+        - mongodb3:27017
+      when: groups.mongod.index(inventory_hostname) == 0
+
+
+
+
+
+
+
+
+# create index
+
+- name: Create multiple indexes
+  community.mongodb.mongodb_index:
+    login_user: admin
+    login_password: secret
+    indexes:
+      - database: mydb
+        collection: test
+        keys:
+          - username: 1
+            last_login: -1
+        options:
+          name: myindex
+        state: present
+      - database: mydb
+        collection: test
+        keys:
+          - email: 1
+            last_login: -1
+        options:
+          name: myindex2
+        state: present
